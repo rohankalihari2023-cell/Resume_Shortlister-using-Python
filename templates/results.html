@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shortlisting Results</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Results for {{ filename }}</h1>
+
+    <p>Matched {{ matched }} out of {{ total }} required skills ({{ percentage|round(2) }}%).</p>
+
+    {% if shortlisted %}
+      <p style="color:green; font-weight:bold;">✅ Resume Shortlisted (75% or more match)</p>
+      <ul>
+        {% for skill in skills %}
+          <li>{{ skill }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p style="color:red; font-weight:bold;">❌ Resume NOT Shortlisted (less than 75% match)</p>
+      <p>The candidate needs to include more required skills.</p>
+    {% endif %}
+
+    <a href="{{ url_for('index') }}">⬅ Upload Another Resume</a> |
+    <a href="{{ url_for('dashboard') }}">📂 View HR Dashboard</a>
+  </div>
+</body>
+</html>

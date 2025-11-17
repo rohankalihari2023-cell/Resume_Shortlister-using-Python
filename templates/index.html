@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Resume Shortlister</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Resume Shortlisting Portal</h1>
+    <form method="POST" enctype="multipart/form-data">
+      <label for="resume">Upload Resume (PDF/DOCX):</label>
+      <input type="file" name="resume" required>
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+</body>
+</html>

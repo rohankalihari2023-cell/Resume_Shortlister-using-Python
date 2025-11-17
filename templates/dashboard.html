@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HR Dashboard - Shortlisted Resumes</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>📂 HR Dashboard</h1>
+
+    {% if files %}
+      <p>Total Shortlisted Resumes: {{ files|length }}</p>
+      <table>
+        <tr>
+          <th>Candidate Resume</th>
+          <th>Action</th>
+        </tr>
+        {% for file in files %}
+        <tr>
+          <td>{{ file }}</td>
+          <td><a href="{{ url_for('download_file', filename=file) }}">⬇ Download</a></td>
+        </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p style="color:red;">❌ No resumes shortlisted yet.</p>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('index') }}">⬅ Back to Upload Page</a>
+  </div>
+</body>
+</html>
