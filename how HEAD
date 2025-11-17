@@ -1,0 +1,208 @@
+[33mcommit c3a1e99d81090fee3954c5407e40eedd67e2fa7e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m
+Author: rohankalihari2023-cell <rohan.kalihari2023@ssipmt.com>
+Date:   Mon Nov 17 12:03:11 2025 +0530
+
+    Initial commit
+
+[1mdiff --git a/.vscode/launch.json b/.vscode/launch.json[m
+[1mnew file mode 100644[m
+[1mindex 0000000..68dee94[m
+[1m--- /dev/null[m
+[1m+++ b/.vscode/launch.json[m
+[36m@@ -0,0 +1,11 @@[m
+[32m+[m[32m{[m
+[32m+[m[32m  "version": "0.2.0",[m
+[32m+[m[32m  "configurations": [[m
+[32m+[m[32m    {[m
+[32m+[m[32m      "name": "Launch Chrome",[m
+[32m+[m[32m      "type": "chrome",[m
+[32m+[m[32m      "request": "launch",[m
+[32m+[m[32m      "url": "http://127.0.0.1:5000"[m
+[32m+[m[32m    }[m
+[32m+[m[32m  ][m
+[32m+[m[32m}[m
+[1mdiff --git a/app.py b/app.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..5932d8a[m
+[1m--- /dev/null[m
+[1m+++ b/app.py[m
+[36m@@ -0,0 +1,91 @@[m
+[32m+[m[32mimport os[m
+[32m+[m[32mimport shutil[m
+[32m+[m[32mfrom flask import Flask, render_template, request, send_from_directory[m
+[32m+[m[32mimport PyPDF2[m
+[32m+[m[32mfrom docx import Document[m
+[32m+[m
+[32m+[m[32mapp = Flask(__name__)[m
+[32m+[m
+[32m+[m[32mUPLOAD_FOLDER = "uploads"[m
+[32m+[m[32mSHORTLIST_FOLDER = "shortlisted_resumes"[m
+[32m+[m
+[32m+[m[32mos.makedirs(UPLOAD_FOLDER, exist_ok=True)[m
+[32m+[m[32mos.makedirs(SHORTLIST_FOLDER, exist_ok=True)[m
+[32m+[m
+[32m+[m[32mapp.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER[m
+[32m+[m[32mapp.config["SHORTLIST_FOLDER"] = SHORTLIST_FOLDER[m
+[32m+[m
+[32m+[m[32m# Required skills for shortlisting[m
+[32m+[m[32mREQUIRED_SKILLS = ["python", "matplotlib", "pandas", "machine learning", "sql"][m
+[32m+[m
+[32m+[m[32mdef extract_text(file_path):[m
+[32m+[m[32m    """Extract text from PDF or DOCX"""[m
+[32m+[m[32m    if file_path.endswith(".pdf"):[m
+[32m+[m[32m        text = ""[m
+[32m+[m[32m        with open(file_path, "rb") as f:[m
+[32m+[m[32m            reader = PyPDF2.PdfReader(f)[m
+[32m+[m[32m            for page in reader.pages:[m
+[32m+[m[32m                text += page.extract_text() or ""[m
+[32m+[m[32m        return text.lower()[m
+[32m+[m
+[32m+[m[32m    elif file_path.endswith(".docx"):[m
+[32m+[m[32m        doc = Document(file_path)[m
+[32m+[m[32m        return " ".join([p.text for p in doc.paragraphs]).lower()[m
+[32m+[m[32m    else:[m
+[32m+[m[32m        return ""[m
+[32m+[m
+[32m+[m[32mdef shortlist_resume(text):[m
+[32m+[m[32m    """Return matched skills from text"""[m
+[32m+[m[32m    return [skill for skill in REQUIRED_SKILLS if skill in text][m
+[32m+[m
+[32m+[m[32m@app.route("/", methods=["GET", "POST"])[m
+[32m+[m[32mdef index():[m
+[32m+[m[32m    if request.method == "POST":[m
+[32m+[m[32m        uploaded_file = request.files["resume"][m
+[32m+[m[32m        if uploaded_file.filename != "":[m
+[32m+[m[32m            file_path = os.path.join(app.config["UPLOAD_FOLDER"], uploaded_file.filename)[m
+[32m+[m[32m            uploaded_file.save(file_path)[m
+[32m+[m
+[32m+[m[32m            # Extract text and check skills[m
+[32m+[m[32m            text = extract_text(file_path)[m
+[32m+[m[32m            matched_skills = shortlist_resume(text)[m
+[32m+[m
+[32m+[m[32m            # Calculate percentage match[m
+[32m+[m[32m            total = len(REQUIRED_SKILLS)[m
+[32m+[m[32m            matched = len(matched_skills)[m
+[32m+[m[32m            percentage = (matched / total) * 100[m
+[32m+[m
+[32m+[m[32m            shortlisted = percentage >= 75[m
+[32m+[m
+[32m+[m[32m            # If shortlisted → move to shortlisted_resumes folder[m
+[32m+[m[32m            if shortlisted:[m
+[32m+[m[32m                dest_path = os.path.join(app.config["SHORTLIST_FOLDER"], uploaded_file.filename)[m
+[32m+[m[32m                shutil.copy(file_path, dest_path)[m
+[32m+[m
+[32m+[m[32m            return render_template([m
+[32m+[m[32m                "results.html",[m
+[32m+[m[32m                filename=uploaded_file.filename,[m
+[32m+[m[32m                skills=matched_skills,[m
+[32m+[m[32m                total=total,[m
+[32m+[m[32m                matched=matched,[m
+[32m+[m[32m                percentage=percentage,[m
+[32m+[m[32m                shortlisted=shortlisted[m
+[32m+[m[32m            )[m
+[32m+[m
+[32m+[m[32m    return render_template("index.html")[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@app.route("/dashboard")[m
+[32m+[m[32mdef dashboard():[m
+[32m+[m[32m    """Show all shortlisted resumes"""[m
+[32m+[m[32m    files = os.listdir(app.config["SHORTLIST_FOLDER"])[m
+[32m+[m[32m    return render_template("dashboard.html", files=files)[m
+[32m+[m
+[32m+[m[32m@app.route("/download/<filename>")[m
+[32m+[m[32mdef download_file(filename):[m
+[32m+[m[32m    """Allow HR to download shortlisted resumes"""[m
+[32m+[m[32m    return send_from_directory(app.config["SHORTLIST_FOLDER"], filename, as_attachment=True)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mif __name__ == "__main__":[m
+[32m+[m[32m    app.run(debug=True)[m
+[1mdiff --git a/static/style.css b/static/style.css[m
+[1mnew file mode 100644[m
+[1mindex 0000000..bd04532[m
+[1m--- /dev/null[m
+[1m+++ b/static/style.css[m
+[36m@@ -0,0 +1,54 @@[m
+[32m+[m[32mbody {[m
+[32m+[m[32m  font-family: Arial, sans-serif;[m
+[32m+[m[32m  background: #f5f6fa;[m
+[32m+[m[32m  text-align: center;[m
+[32m+[m[32m  margin: 50px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.container {[m
+[32m+[m[32m  background: #fff;[m
+[32m+[m[32m  padding: 30px;[m
+[32m+[m[32m  border-radius: 12px;[m
+[32m+[m[32m  width: 50%;[m
+[32m+[m[32m  margin: auto;[m
+[32m+[m[32m  box-shadow: 0px 4px 10px rgba(0,0,0,0.1);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mh1 {[m
+[32m+[m[32m  color: #2c3e50;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mbutton {[m
+[32m+[m[32m  background: #3498db;[m
+[32m+[m[32m  color: white;[m
+[32m+[m[32m  border: none;[m
+[32m+[m[32m  padding: 10px 20px;[m
+[32m+[m[32m  margin-top: 15px;[m
+[32m+[m[32m  border-radius: 6px;[m
+[32m+[m[32m  cursor: pointer;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mbutton:hover {[m
+[32m+[m[32m  background: #2980b9;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mtable {[m
+[32m+[m[32m  width: 100%;[m
+[32m+[m[32m  border-collapse: collapse;[m
+[32m+[m[32m  margin-top: 20px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mtable th, table td {[m
+[32m+[m[32m  padding: 12px;[m
+[32m+[m[32m  border: 1px solid #ddd;[m
+[32m+[m[32m  text-align: center;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mtable th {[m
+[32m+[m[32m  background: #3498db;[m
+[32m+[m[32m  color: white;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mtable tr:nth-child(even) {[m
+[32m+[m[32m  background: #f2f2f2;[m
+[32m+[m[32m}[m
+[1mdiff --git a/templates/dashboard.html b/templates/dashboard.html[m
+[1mnew file mode 100644[m
+[1mindex 0000000..7b0487e[m
+[1m--- /dev/null[m
+[1m+++ b/templates/dashboard.html[m
+[36m@@ -0,0 +1,34 @@[m
+[32m+[m[32m<!DOCTYPE html>[m
+[32m+[m[32m<html lang="en">[m
+[32m+[m[32m<head>[m
+[32m+[m[32m  <meta charset="UTF-8">[m
+[32m+[m[32m  <title>HR Dashboard - Shortlisted Resumes</title>[m
+[32m+[m[32m  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">[m
+[32m+[m[32m</head>[m
+[32m+[m[32m<body>[m
+[32m+[m[32m  <div class="container">[m
+[32m+[m[32m    <h1>📂 HR Dashboard</h1>[m
+[32m+[m
+[32m+[m[32m    {% if files %}[m
+[32m+[m[32m      <p>Total Shortlisted Resumes: {{ files|length }}</p>[m
+[32m+[m[32m      <table>[m
+[32m+[m[32m        <tr>[m
+[32m+[m[32m          <th>Candidate Resume</th>[m
+[32m+[m[32m          <th>Action</th>[m
+[32m+[m[32m        </tr>[m
+[32m+[m[32m        {% for file in files %}[m
+[32m+[m[32m        <tr>[m
+[32m+[m[32m          <td>{{ file }}</td>[m
+[32m+[m[32m          <td><a href="{{ url_for('download_
